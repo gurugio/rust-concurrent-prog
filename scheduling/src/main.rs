@@ -14,6 +14,7 @@ struct Task {
 impl ArcWake for Task {
     fn wake_by_ref(arc_self: &Arc<Self>) {
         let self0 = arc_self.clone();
+        //println!("send by wake");
         arc_self.sender.send(self0).unwrap();
     }
 }
@@ -60,6 +61,7 @@ impl Spawner {
             sender: self.sender.clone(),
         });
 
+        //println!("send by spawner");
         self.sender.send(task).unwrap();
     }
 }
@@ -88,13 +90,13 @@ impl Future for Hello {
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<()> {
         match (*self).state {
             StateHello::HELLO => {
-                print!("Hello, ");
+                println!("Hello, ");
                 (*self).state = StateHello::WORLD;
                 cx.waker().wake_by_ref();
                 return Poll::Pending;
             }
             StateHello::WORLD => {
-                print!("World!");
+                println!("World!");
                 (*self).state = StateHello::END;
                 cx.waker().wake_by_ref();
                 return Poll::Pending;
@@ -106,8 +108,51 @@ impl Future for Hello {
     }
 }
 
+struct Bye {
+    state: StateBye,
+}
+
+enum StateBye {
+    GOOD,
+    BYE,
+    END,
+}
+
+impl Bye {
+    fn new() -> Self {
+        Bye {
+            state: StateBye::GOOD,
+        }
+    }
+}
+
+impl Future for Bye {
+    type Output = ();
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<()> {
+        match (*self).state {
+            StateBye::GOOD => {
+                println!("Good, ");
+                (*self).state = StateBye::BYE;
+                cx.waker().wake_by_ref();
+                return Poll::Pending;
+            }
+            StateBye::BYE => {
+                println!("Bye!");
+                (*self).state = StateBye::END;
+                cx.waker().wake_by_ref();
+                return Poll::Pending;
+            }
+            StateBye::END => {
+                return Poll::Ready(());
+            }
+        }
+    }
+}
+
 fn main() {
     let executor = Executor::new();
     executor.get_spawner().spawn(Hello::new());
+    executor.get_spawner().spawn(Bye::new());
     executor.run();
 }
