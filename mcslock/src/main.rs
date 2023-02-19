@@ -1,7 +1,7 @@
-use std::cell::UnsafeCell;
-use std::ops::{Deref, DerefMut};
-use std::ptr::null_mut;
-use std::sync::atomic::{fence, AtomicBool, AtomicPtr, Ordering};
+use std::cell::UnsafeCell; // codememory:skip
+use std::ops::{Deref, DerefMut}; // codememory:skip
+use std::ptr::null_mut; // codememory:skip
+use std::sync::atomic::{fence, AtomicBool, AtomicPtr, Ordering}; // codememory:skip
 
 pub struct MCSLock<T> {
     last: AtomicPtr<MCSNode<T>>,
